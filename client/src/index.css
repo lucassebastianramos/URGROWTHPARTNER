@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+/* iOS Safe Area Padding */
+.pt-safe {
+  padding-top: max(1rem, env(safe-area-inset-top));
+}
+
+.pb-safe {
+  padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+}
+
+/* Custom glowing shadows */
+.glow-emerald {
+  box-shadow: 0 0 50px -10px rgba(16, 185, 129, 0.4);
+}
+
+.glow-blue {
+  box-shadow: 0 0 50px -10px rgba(59, 130, 246, 0.4);
+}
+
+.glow-rose {
+  box-shadow: 0 0 50px -10px rgba(244, 63, 94, 0.4);
+}
+
+/* Prevent text selection and blue tap highlight on mobile buttons */
+button {
+  user-select: none;
+  -webkit-user-select: none;
+}

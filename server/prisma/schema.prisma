@@ -1,0 +1,80 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum DoorbellStatus {
+  UNCLAIMED // Fabricada pero en la caja
+  ACTIVE    // Vinculada y funcionando en una casa/edificio
+  SUSPENDED // Por falta de pago del abono o reportada dañada
+}
+
+enum CallStatus {
+  RINGING
+  CONNECTED
+  COMPLETED
+  MISSED
+  BUSY
+  REJECTED
+}
+
+model User {
+  id              String         @id @default(uuid())
+  name            String
+  phone           String?
+  telegramChatId  String?        @map("telegram_chat_id")
+  units           DoorbellUnit[] @relation("UnitResidents")
+  createdAt       DateTime       @default(now()) @map("created_at")
+
+  @@map("users")
+}
+
+model Doorbell {
+  id              String         @id @default(uuid())
+  serialNumber    String         @unique @map("serial_number") // "UG-1001", "UG-1002" grabado en el metal
+  claimCode       String         @map("claim_code")            // PIN secreto de activación del sobre (ej: "8492")
+  status          DoorbellStatus @default(UNCLAIMED)
+  
+  // Slug opcional (ej: "oficina", "ph-brown") para compatibilidad de rutas amigables
+  slug            String?        @unique
+  
+  // Datos configurables por el cliente (mutables en cualquier momento)
+  name            String?        // "Complejo Brown 1200" o "Casa de Familia"
+  address         String?
+  units           DoorbellUnit[]
+  
+  createdAt       DateTime       @default(now()) @map("created_at")
+  activatedAt     DateTime?      @map("activated_at")
+
+  @@map("doorbells")
+}
+
+model DoorbellUnit {
+  id           String        @id @default(uuid())
+  doorbellId   String        @map("doorbell_id")
+  doorbell     Doorbell      @relation(fields: [doorbellId], references: [id], onDelete: Cascade)
+  label        String        // Ej: "1° A", "Frente", "Fondo", "Portería"
+  floor        String?       // Opcional para ordenar en edificios ("PB", "1", "2")
+  residents    User[]        @relation("UnitResidents")
+  callSessions CallSession[]
+  createdAt    DateTime      @default(now()) @map("created_at")
+
+  @@map("doorbell_units")
+}
+
+model CallSession {
+  id          String        @id @default(uuid())
+  unitId      String        @map("unit_id")
+  unit        DoorbellUnit  @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  status      CallStatus    @default(RINGING)
+  visitorIp   String?       @map("visitor_ip")
+  startedAt   DateTime      @default(now()) @map("started_at")
+  connectedAt DateTime?     @map("connected_at")
+  endedAt     DateTime?     @map("ended_at")
+
+  @@map("call_sessions")
+}
